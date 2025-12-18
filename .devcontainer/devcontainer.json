@@ -1,0 +1,71 @@
+{
+  "name": "ROS2 Jazzy Dev Environment",
+
+  "build": {
+    "dockerfile": "../docker/Dockerfile",
+    "context": "..",    
+    "args": {
+      "TARGETARCH": "amd64",
+      "USERNAME": "ubuntu"
+    },
+    "options": ["--network=host"] // 빌드 옵션에 명시적으로 추가
+  },
+
+  "workspaceFolder": "/workspaces/ros2_ws",
+
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-vscode.cpptools",
+        "ms-python.python",
+        "ms-iot.vscode-ros",
+        "ms-azuretools.vscode-docker",
+        "redhat.vscode-xml", // ROS2 launch/urdf 편집 시 유용
+        "twxs.cmake"         // C++ 빌드 필수
+      ],
+      "settings": {
+        "python.analysis.extraPaths": ["/opt/ros/jazzy/lib/python3.12/site-packages"]
+      }
+    }
+  },
+
+  "runArgs": [
+    "--net=host",
+    "--pid=host",
+    "--ipc=host",
+    // "--dns=8.8.8.8"
+    "--privileged", // 하드웨어 장치(카메라, 라이다) 접근 시 필요
+    "--env=DISPLAY=${localEnv:DISPLAY}" // GUI 출력 설정
+  ],
+
+  "containerEnv": {
+    "DEBIAN_FRONTEND": "noninteractive",
+    "TZ": "Asia/Seoul",
+    "DISPLAY": "${localEnv:DISPLAY}",
+    "VIDEO_GROUP_ID": "44" // 호스트의 video 그룹 ID에 맞춰 조정
+  },
+
+
+  "features": {
+    // 유용한 추가 기능들    
+    "ghcr.io/devcontainers/features/common-utils:2": {
+      // "username": "ros"
+      "installZsh": true,
+      "username": "ubuntu",
+      "userUid": "1000",
+      "userGid": "1000"
+    }
+  },
+
+  "mounts": [
+    "source=${localWorkspaceFolder},target=/workspaces/ros2_ws,type=bind",
+    // GUI 출력을 위한 X11 소켓 마운트
+    "source=/tmp/.X11-unix,target=/tmp/.X11-unix,type=bind"
+  ],
+
+
+  // "postCreateCommand": "rosdep install --from-paths src --ignore-src -r -y || true",
+  // "remoteUser": "ros"
+  "postCreateCommand": "sudo apt-get update && rosdep update && rosdep install --from-paths src --ignore-src -r -y",
+  "remoteUser": "ubuntu"
+}
